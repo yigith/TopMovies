@@ -23,7 +23,49 @@ namespace TopMovies.Controllers
 
         public IActionResult Index()
         {
-            return View(_db.Movies.Include(x => x.Genres).ToList());
+            var vm = new HomeViewModel()
+            {
+                Movies = _db.Movies
+                    .Include(x => x.Genres)
+                    .ToList(),
+                Genres = _db.Genres
+                    .OrderBy(x => x.Name)
+                    .Select(x => new GenreWithMovieCountViewModel()
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        MovieCount = x.Movies.Count
+                    })
+                    .ToList()
+            };
+            return View(vm);
+        }
+
+        // Genre/{genreName}
+        public IActionResult IndexWithGenre(string genreName)
+        {
+            Genre genre = _db.Genres
+                .Include(g => g.Movies)
+                .ThenInclude(m => m.Genres)
+                .FirstOrDefault(g => g.Name == genreName);
+
+            if (genre == null) return NotFound();
+
+            var vm = new HomeViewModel()
+            {
+                Movies = genre.Movies,
+                Genres = _db.Genres
+                    .OrderBy(x => x.Name)
+                    .Select(x => new GenreWithMovieCountViewModel()
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        MovieCount = x.Movies.Count
+                    })
+                    .ToList(),
+                GenreId = genre.Id
+            };
+            return View("Index", vm);
         }
 
         public IActionResult Privacy()
