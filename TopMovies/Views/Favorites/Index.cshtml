@@ -1,0 +1,13 @@
+﻿@model List<Movie>
+@{
+    ViewData["Title"] = "My Favorites";
+}
+
+<h1>My Favorite Movies</h1>
+
+<ul>
+    @foreach (Movie movie in Model)
+    {
+        <li>@movie.Name</li>
+    }
+</ul>

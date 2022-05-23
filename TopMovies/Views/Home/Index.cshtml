@@ -1,6 +1,7 @@
 ﻿@model HomeViewModel
 @{
     ViewData["Title"] = "Home Page";
+    var favs = GetFavList();
 }
 
 <h1>Top Movies</h1>
@@ -34,13 +35,19 @@
             <tbody>
                 @foreach (var movie in Model.Movies)
                 {
+                    bool isFav = IsFavorited(movie.Id);
                     <tr>
                         <td>@movie.Id</td>
                         <td><img src="@movie.ImageUrl" alt="@movie.Name" width="67" /></td>
                         <td>
-                            <a href="https://www.imdb.com/title/@movie.ImdbId/" target="_blank">
-                                @movie.Name
-                            </a>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <a href="https://www.imdb.com/title/@movie.ImdbId/" target="_blank">
+                                    @movie.Name
+                                </a>
+                                <a data-fav="@movie.Id" href="#" data-toggle="tooltip" title="@(isFav ? "Remove from Favorites" : "Add to Favorites")" class="text-danger">
+                                    <i class="fa-@(isFav ? "solid" : "regular") fa-heart"></i>
+                                </a>
+                            </div>
                         </td>
                         <td>@movie.Year</td>
                         <td>@movie.Rating</td>
@@ -57,5 +64,59 @@
 @section Scripts {
     <script>
         $(".table").DataTable();
+
+        // https://getbootstrap.com/docs/4.6/components/tooltips/#example-enable-tooltips-everywhere
+        $('[data-toggle="tooltip"]').tooltip();
+
+        $("body").on("click", "[data-fav]", function (event) {
+            var a = this;
+            event.preventDefault();
+            var movieId = $(a).data("fav");
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("Toggle", "Favorites")",
+                data: { movieId },
+                success: function (data) {
+                    if (data.favorited) {
+                        $(a).attr("title", "Remove from Favorites");
+                        $(a).find("i").removeClass("fa-regular").addClass("fa-solid");
+                        success("Added to favorites.");
+                    }
+                    else {
+                        $(a).attr("title", "Add to Favorites");
+                        $(a).find("i").removeClass("fa-solid").addClass("fa-regular");
+                        success("Removed from favorites.");
+                    }
+                    $(a).tooltip("dispose");
+                    $(a).tooltip();
+                }
+            });
+        });
     </script>
+}
+
+@{
+    // todo: bunu yarın dependency injection ve servis sınıfları yöntemine dönüştüreceğiz.
+            
+    bool IsFavorited(int movieId)
+    {
+        return favs.Contains(movieId);
+    }
+
+    List<int> GetFavList() // kod tekrarı, yarın önleyeceğiz
+    {
+        var favs = Context.Request.Cookies["favs"];
+
+        if (string.IsNullOrEmpty(favs)) return new List<int>();
+
+        try
+        {
+            return favs.Split('-').Select(s => Convert.ToInt32(s)).ToList();
+        }
+        catch (Exception)
+        {
+            return new List<int>();
+        }
+    }
 }
