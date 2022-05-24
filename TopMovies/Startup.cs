@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TopMovies.Models;
+using TopMovies.Services;
 
 namespace TopMovies
 {
@@ -25,6 +26,8 @@ namespace TopMovies
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpContextAccessor();
+            services.AddScoped<FavoriteService>();
             services.AddDbContext<ApplicationDbContext>(x => 
                 x.UseSqlServer(Configuration.GetConnectionString("ApplicationDbContext")));
             services.AddControllersWithViews();

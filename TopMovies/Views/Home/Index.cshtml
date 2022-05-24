@@ -1,7 +1,9 @@
-﻿@model HomeViewModel
+﻿@inject FavoriteService fs
+@model HomeViewModel
 @{
     ViewData["Title"] = "Home Page";
-    var favs = GetFavList();
+    var favs = fs.GetFavList();
+    bool IsFavorited(int movieId) => favs.Contains(movieId);
 }
 
 <h1>Top Movies</h1>
@@ -94,29 +96,4 @@
             });
         });
     </script>
-}
-
-@{
-    // todo: bunu yarın dependency injection ve servis sınıfları yöntemine dönüştüreceğiz.
-            
-    bool IsFavorited(int movieId)
-    {
-        return favs.Contains(movieId);
-    }
-
-    List<int> GetFavList() // kod tekrarı, yarın önleyeceğiz
-    {
-        var favs = Context.Request.Cookies["favs"];
-
-        if (string.IsNullOrEmpty(favs)) return new List<int>();
-
-        try
-        {
-            return favs.Split('-').Select(s => Convert.ToInt32(s)).ToList();
-        }
-        catch (Exception)
-        {
-            return new List<int>();
-        }
-    }
 }
